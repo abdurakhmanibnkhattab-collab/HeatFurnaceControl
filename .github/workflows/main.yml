@@ -22,8 +22,31 @@ jobs:
           java-version: '17'
 
       - name: Распаковать проект
+        run: unzip -q HeatFurnaceControl-AndroidStudio.zip
+
+      - name: Исправить настройки Java и Kotlin
         run: |
-          unzip -q HeatFurnaceControl-AndroidStudio.zip
+          python3 - <<'PY'
+          p = "HeatFurnaceControl/app/build.gradle.kts"
+          with open(p, encoding="utf-8") as f:
+              s = f.read()
+
+          old = "    buildFeatures { compose = true }"
+          new = """    compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+              buildFeatures { compose = true }"""
+
+          if old not in s:
+              raise SystemExit("Не найдена строка buildFeatures")
+
+          with open(p, "w", encoding="utf-8") as f:
+              f.write(s.replace(old, new, 1))
+          PY
 
       - name: Установить Gradle
         uses: gradle/actions/setup-gradle@v4
